@@ -431,6 +431,34 @@ label{display:block;font-size:13px;color:var(--mu);margin:6px 0 2px}input,select
 
 <section id="mancalc" hidden><div id="mancalcRoot"></div></section>
 
+
+<section id="library" hidden>
+  <div class="card">
+    <b>Publication Library</b>
+    <div class="mu">Download the official public-domain sight reduction tables and almanacs. If you are using a Chromium-based browser (Chrome, Edge, Brave), you can select a folder on your device and the app will remember it, allowing you to open these books from within the Manual tab.</div>
+    <button class="sm" id="chooseFolderBtn" style="margin-top:8px">📁 Choose Library Folder</button>
+    <div class="mu" id="folderNote" style="margin-top:6px; color:var(--ok)">No folder selected.</div>
+  </div>
+
+  <div class="card">
+    <b>Pub. 229 — Sight Reduction Tables for Marine Navigation</b>
+    <div class="mu">The 6 volumes cover all latitudes 0° to 90°. Download all, or just the one matching your current latitude.</div>
+    <ul id="lib-229" style="margin-top:8px"></ul>
+  </div>
+
+  <div class="card">
+    <b>The Nautical Almanac</b>
+    <div class="mu">The official commercial almanac is not public domain, but a free "Sun-only" or "Air" almanac is published by the US Government, and older full almanacs are freely available.</div>
+    <ul id="lib-almanac" style="margin-top:8px"></ul>
+  </div>
+
+  <div class="card">
+    <b>Sight Reduction Forms</b>
+    <div class="mu">Printable worksheets matching the Vanderbilt form used in the Manual tab.</div>
+    <ul id="lib-forms" style="margin-top:8px"></ul>
+  </div>
+</section>
+
 <section id="help" hidden><div id="helpList"></div></section>
 
 <section id="printAlmanac" hidden>
@@ -812,7 +840,7 @@ function show(p){
   if(p=='midday' && !S.set.showMidday) p='sights';
   document.body.classList.remove('printing');
   $('printAlmanac').hidden = true;
-  for(const x of['sights','midday','fix','setup','almanac','examples','readme','help','mancalc'])$(x).hidden=x!=p;
+  for(const x of['sights','midday','fix','setup','almanac','examples','readme','help','mancalc','library'])$(x).hidden=x!=p;
   document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.p==p));
   if(p=='fix'){doFix();renderDirectFix();}
   if(p=='sights'){ lagNote(); updateLevelUI(); updateRFNote(); updateSaveButtonLabel(); render(); renderSessions(); }
@@ -2035,6 +2063,172 @@ function init(){
     document.body.innerHTML = `<div style="padding:20px;color:red;font-family:monospace;"><h3>Init Error</h3><p>${e.message}</p><pre>${e.stack}</pre></div>`;
   }
 }
+
+
+/* ---- Library & Local File Reference ---- */
+let savedFolderHandle = null;
+const DB_NAME = 'sextant-lib';
+const STORE_NAME = 'folder-handle';
+
+const dbPromise = new Promise((resolve, reject) => {
+  const req = indexedDB.open(DB_NAME, 1);
+  req.onupgradeneeded = e => e.target.result.createObjectStore(STORE_NAME);
+  req.onsuccess = e => resolve(e.target.result);
+  req.onerror = e => reject(e.target.error);
+});
+
+async function saveFolderHandle(handle) {
+  const db = await dbPromise;
+  const tx = db.transaction(STORE_NAME, 'readwrite');
+  tx.objectStore(STORE_NAME).put(handle, 'pubFolder');
+  return tx.done || new Promise(r => tx.oncomplete = r);
+}
+
+async function getFolderHandle() {
+  const db = await dbPromise;
+  return new Promise((resolve, reject) => {
+    const req = db.transaction(STORE_NAME).objectStore(STORE_NAME).get('pubFolder');
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function chooseFolder() {
+  if (!window.showDirectoryPicker) {
+    document.getElementById('folderNote').textContent = "Your browser doesn't support local folder access. Files will open in a new tab.";
+    document.getElementById('folderNote').style.color = 'var(--bad)';
+    return;
+  }
+  try {
+    savedFolderHandle = await window.showDirectoryPicker({ mode: 'readwrite' });
+    await saveFolderHandle(savedFolderHandle);
+    document.getElementById('folderNote').textContent = "Library folder connected: " + savedFolderHandle.name;
+    document.getElementById('folderNote').style.color = 'var(--ok)';
+    renderLibrary();
+  } catch (err) {
+    console.warn('Folder selection cancelled', err);
+  }
+}
+
+async function openLocalPDF(filename) {
+  if (!savedFolderHandle) {
+    savedFolderHandle = await getFolderHandle();
+    if (!savedFolderHandle) {
+      alert("Please connect your Library Folder in the Library tab first.");
+      return;
+    }
+  }
+  try {
+    if (await savedFolderHandle.queryPermission({mode: 'read'}) !== 'granted') {
+      if (await savedFolderHandle.requestPermission({mode: 'read'}) !== 'granted') return;
+    }
+    
+    let fileHandle = null;
+    const targetNormalized = filename.toLowerCase().replace('vol', 'v').replace(/[^a-z0-9.]/g, '');
+    
+    try {
+      fileHandle = await savedFolderHandle.getFileHandle(filename);
+    } catch (e) {
+      for await (const entry of savedFolderHandle.values()) {
+        if (entry.kind === 'file') {
+          const entryNormalized = entry.name.toLowerCase().replace('vol', 'v').replace(/[^a-z0-9.]/g, '');
+          if (entryNormalized === targetNormalized) {
+            fileHandle = entry;
+            break;
+          }
+        }
+      }
+    }
+    
+    if (!fileHandle) throw new Error("File not found");
+    
+    const file = await fileHandle.getFile();
+    const url = URL.createObjectURL(file);
+    window.open(url, '_blank');
+  } catch (err) {
+    console.error(err);
+    alert("Could not find " + filename + " in your connected folder. Please download it first using the Library tab.");
+  }
+}
+
+async function downloadPub(url, filename) {
+  if (savedFolderHandle) {
+    try {
+      const response = await fetch(url);
+      if (!response.ok) throw new Error("Network response was not ok");
+      const blob = await response.blob();
+      const fileHandle = await savedFolderHandle.getFileHandle(filename, { create: true });
+      const writable = await fileHandle.createWritable();
+      await writable.write(blob);
+      await writable.close();
+      alert("Saved directly to folder: " + filename);
+      renderLibrary();
+      return;
+    } catch (err) {
+      console.error("Save failed, falling back to tab", err);
+    }
+  }
+  window.open(url, '_blank');
+}
+
+async function renderLibrary() {
+  if (!savedFolderHandle) savedFolderHandle = await getFolderHandle();
+  
+  const folderNote = document.getElementById('folderNote');
+  if (savedFolderHandle) {
+    folderNote.textContent = "Library folder connected: " + savedFolderHandle.name;
+    folderNote.style.color = 'var(--ok)';
+  }
+
+  const pubs229 = [
+    { name: 'Vol. 1 (Lat 0°–15°)', url: 'https://thenauticalalmanac.com/Pub_No_229/Pub229Vol1.pdf', file: 'Pub229v1.pdf' },
+    { name: 'Vol. 2 (Lat 15°–30°)', url: 'https://thenauticalalmanac.com/Pub_No_229/Pub229Vol2.pdf', file: 'Pub229v2.pdf' },
+    { name: 'Vol. 3 (Lat 30°–45°)', url: 'https://thenauticalalmanac.com/Pub_No_229/Pub229Vol3.pdf', file: 'Pub229v3.pdf' },
+    { name: 'Vol. 4 (Lat 45°–60°)', url: 'https://thenauticalalmanac.com/Pub_No_229/Pub229Vol4.pdf', file: 'Pub229v4.pdf' },
+    { name: 'Vol. 5 (Lat 60°–75°)', url: 'https://thenauticalalmanac.com/Pub_No_229/Pub229Vol5.pdf', file: 'Pub229v5.pdf' },
+    { name: 'Vol. 6 (Lat 75°–90°)', url: 'https://thenauticalalmanac.com/Pub_No_229/Pub229Vol6.pdf', file: 'Pub229v6.pdf' }
+  ];
+
+  const almanacs = [
+    { name: 'GHA Aries Long Term (2022–2030)', url: 'https://thenauticalalmanac.com/GHA_Aries_Long_Term/GHA_Aries_2022_to_2030.pdf', file: 'GHA_Aries_2022_2030.pdf' },
+    { name: 'Nautical Almanac (Current Year, Sun Only)', url: 'https://thenauticalalmanac.com/Nautical%20Almanac%20Sun%20Only.pdf', file: 'NA_Sun_Only.pdf' },
+    { name: 'Nautical Almanac (2024 Full)', url: 'https://thenauticalalmanac.com/Nautical%20Almanac%202024.pdf', file: 'NA_2024.pdf' },
+    { name: 'Increments & Corrections (2024)', url: 'https://thenauticalalmanac.com/Increments%20and%20Corrections%202024.pdf', file: 'NA_Increments_2024.pdf' }
+  ];
+
+  const forms = [
+    { name: 'Sight Reduction Form (Vanderbilt PDF)', url: 'https://my.vanderbilt.edu/astronav/files/2017/08/Sight-Reduction-Form.pdf', file: 'Sight_Reduction_Form.pdf' },
+    { name: 'Pub 249 Vol 1 (Air Navigation)', url: 'https://thenauticalalmanac.com/TNAResources/Sight%20Reduction%20Tables/Pub.249/Pub249v1.pdf', file: 'Pub249v1.pdf' }
+  ];
+
+  const buildList = (arr) => arr.map(p => {
+    let localBtn = '';
+    if (savedFolderHandle) {
+      localBtn = `<button class="sm" onclick="openLocalPDF('${p.file}')" style="font-size:12px;padding:6px 10px;margin-right:8px;background:#e0e7ff;color:#3730a3;border-color:#c7d2fe">📖 Open Local</button>`;
+    }
+    return `
+    <li style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--bd)">
+      <span style="font-size:14px">${p.name}</span>
+      <div>
+        ${localBtn}
+        <button class="sm" onclick="downloadPub('${p.url}', '${p.file}')" style="font-size:12px;padding:6px 10px">Download</button>
+      </div>
+    </li>
+  `}).join('');
+
+  document.getElementById('lib-229').innerHTML = buildList(pubs229);
+  document.getElementById('lib-almanac').innerHTML = buildList(almanacs);
+  document.getElementById('lib-forms').innerHTML = buildList(forms);
+}
+
+const _origShowLib = show;
+show = function(p) {
+  _origShowLib(p);
+  if (p === 'library') renderLibrary();
+};
+
+const folderBtn = document.getElementById('chooseFolderBtn');
+if (folderBtn) folderBtn.onclick = chooseFolder;
 
 document.addEventListener('DOMContentLoaded', init);
 </script>

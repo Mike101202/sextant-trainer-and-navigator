@@ -338,23 +338,50 @@ label{display:block;font-size:13px;color:var(--mu);margin:6px 0 2px}input,select
   </div>
   
   <div class="card">
-    <b>The Two Ways to Use the App</b>
-    <div class="mu">
-      <b>1. Auto Mode (The Fast Way)</b><br>
-      Go to Sights, select a body, press SIGHT, enter Hs, and press Save. The app instantly calculates Ho, Hc, Zn, and the intercept. Tick it and go to Fix.<br><br>
-      <b>2. Manual Mode (The Paper Way)</b><br>
-      Go to Setup and change "Level of assistance" to <b>Full manual</b>. This reveals the <b>Manual tab</b>. Take your sight, then go to the Manual tab to work through a step-by-step worksheet (based on the Vanderbilt form) using your printed Nautical Almanac and Pub 229.
-    </div>
+    <b>Getting Started (Setup Tab)</b>
+    <div class="mu">Before taking a sight, you must configure the Setup tab:</div>
+    <ul style="list-style:disc; padding-left:20px; margin:6px 0">
+      <li><b>Assumed Position (AP):</b> The intercept method requires an AP. Set this to Auto GPS, Last Known, or Manual (enter lat/lon).</li>
+      <li><b>Height of Eye (in metres):</b> Used to calculate the dip of the horizon. Tick "Bubble sextant" if flying (sets dip to zero).</li>
+      <li><b>Index Correction (IE):</b> The error of your sextant, in arcminutes.</li>
+      <li><b>Limb:</b> Choose Lower (L) or Upper (U) for the Sun and Moon.</li>
+      <li><b>Lag:</b> The time in seconds between taking the sight and pressing the button (reaction time).</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <b>Way 1: Auto Mode (The Fast Way)</b>
+    <div class="mu">Use this if you just want the app to do all the math and plot your position.</div>
+    <ol style="padding-left:20px; margin:6px 0">
+      <li>Go to the <b>Sights</b> tab.</li>
+      <li>Select your Body and Time.</li>
+      <li>Press <b>SIGHT</b> to lock in the time, and enter your Sextant Altitude (Hs).</li>
+      <li>Press <b>Save sight</b>. The app instantly calculates Ho, Hc, Zn, and the intercept.</li>
+      <li>Tick the sight, go to the <b>Fix</b> tab, and your position is plotted.</li>
+    </ol>
+  </div>
+
+  <div class="card">
+    <b>Way 2: Manual Mode (The Paper Way)</b>
+    <div class="mu">Use this to practice looking up values in your printed Nautical Almanac and Pub. 229.</div>
+    <ol style="padding-left:20px; margin:6px 0">
+      <li>Go to <b>Setup</b> and change the <b>Level of assistance</b> to <b>Full manual</b>. <i>This reveals the new <b>Manual</b> tab.</i></li>
+      <li>Go to the <b>Sights</b> tab, take your sight, and press <b>Save sight</b>.</li>
+      <li>Go to the new <b>Manual</b> tab. You will see a worksheet for your sighting, mirroring the Vanderbilt standard form.</li>
+      <li>Work through the sheet using your paper books. Use the <code>○</code> button to reveal hints, or <code>✓</code> to let the app check your work.</li>
+      <li>Once the intercept is calculated, tick the sight, and go to the <b>Fix</b> tab.</li>
+    </ol>
   </div>
 
   <div class="card">
     <b>Getting a Fix</b>
-    <div class="mu">To calculate a fix, tick at least two sightings in the Sights list and go to the Fix tab.<br><br>
-    <b>What makes a good fix?</b><br>
-    · <b>Geometry:</b> Lines of position should cross near 90°. Watch for azimuth spread warnings.<br>
-    · <b>Intercepts:</b> Small intercepts (under 3–5 nm) usually mean good sights.<br>
-    · <b>Scatter:</b> With 3+ sights, the RMS scatter shows if one sight is bad.<br>
-    · <b>Direct Fix:</b> With exactly two stationary sights, the Van Allen two-circle intersection is calculated as a cross-check.</div>
+    <div class="mu">To calculate a fix, you need at least <b>two ticked sightings</b>.</div>
+    <ul style="list-style:disc; padding-left:20px; margin:6px 0">
+      <li><b>Geometry:</b> Lines of position should cross near 90°.</li>
+      <li><b>Intercepts:</b> Small intercepts (under 3–5 nm) usually mean good sights.</li>
+      <li><b>Scatter:</b> With 3+ sights, the RMS scatter shows if one sight is bad.</li>
+      <li><b>Direct Fix:</b> With exactly two stationary sights, the Van Allen two-circle intersection is calculated as a cross-check.</li>
+    </ul>
   </div>
 
   <div class="card">
@@ -373,18 +400,15 @@ label{display:block;font-size:13px;color:var(--mu);margin:6px 0 2px}input,select
   </div>
 
   <div class="card">
-    <b>Midday fit (zenith-distance)</b>
-    <div class="mu">The Midday tab fits the parabola <b>z² = A + B·t + C·t²</b> across ticked Sun sightings to find true noon time (longitude) and latitude. A quality check reports if the sightings span noon.</div>
+    <b>F-Droid & Android</b>
+    <div class="mu">An F-Droid release is planned. To build the Android APK yourself, this app can be wrapped with Capacitor:<br>
+    <code style="font-size:11px">npm install<br>npx cap add android<br>npx cap sync<br>cd android && ./gradlew assembleRelease</code></div>
   </div>
 
   <div class="card">
-    <b>Accuracy Hierarchy</b>
-    <div class="mu"><b>The app's ephemeris is coarser than the printed Nautical Almanac.</b> The Sun is good to ±0.6′, stars to ±0.3′, the Moon to ±0.3′, planets to ±1–2′. When the app and the printed book disagree, trust the printed book.</div>
-  </div>
-
-  <div class="card">
-    <b>Expected fix accuracy</b>
-    <table>
+    <b>Accuracy</b>
+    <div class="mu">The app's ephemeris is coarser than the printed Nautical Almanac. The Sun is good to ±0.6′, stars to ±0.3′, the Moon to ±0.3′, planets to ±1–2′. When the app and the printed book disagree, trust the printed book.</div>
+    <table style="margin-top:8px">
       <tr><th>Condition</th><th>Typical</th></tr>
       <tr><td>2 sights, good geometry</td><td>2–5 nm</td></tr>
       <tr><td>3+ sights, ~90° apart</td><td>1–3 nm</td></tr>
@@ -392,22 +416,13 @@ label{display:block;font-size:13px;color:var(--mu);margin:6px 0 2px}input,select
       <tr><td>Midday zenith-distance fit</td><td>±0.5–2 nm</td></tr>
       <tr><td>Noon latitude (single sight)</td><td>±0.5–1 nm</td></tr>
     </table>
+    <div class="mu" style="margin-top:8px">The built-in almanac is computed from the same ephemeris as the app (Meeus, ELP-2000, JPL elements). It is suitable for practice and cross-checking, not for primary navigation.</div>
   </div>
 
   <div class="card">
-    <b>Corrections applied</b>
-    <ul style="list-style:disc;padding-left:20px">
-      <li>Index error · Dip (or bubble = 0)</li>
-      <li>Refraction: Bennett (1982) · Parallax · Semi-diameter</li>
-      <li>Star precession &amp; proper motion</li>
-      <li>Planet precession, light-time, annual aberration</li>
-      <li>Nutation in longitude via GAST</li>
-    </ul>
-  </div>
-
-  <div class="card">
-    <b>Credits</b>
+    <b>Contributing & Credits</b>
     <div class="mu" style="font-size:11px">
+      Bug reports and suggestions welcome — please open an issue on GitHub.<br><br>
       Sextant diagram: Joaquim Alves Gaspar, Wikimedia Commons, CC BY-SA 3.0.<br>
       Ephemeris: Meeus Astronomical Algorithms, ELP-2000/82 (Moon), JPL Keplerian elements (Planets), IAU 1976 precession.
     </div>

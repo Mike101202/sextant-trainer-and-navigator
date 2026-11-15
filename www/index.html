@@ -774,7 +774,7 @@ function renderMiddayFit() {
   const qCls = (fit.quality === 'OK') ? 'ok' : 'bad';
   out.innerHTML = `
     <div class="exp">${fmt(fit.lat, 'lat')}<br>${fmt(fit.lon, 'lon')}</div>
-    <div style="margin-top:6px">Noon time: <b>${new Date(fit.noonMs).toLocaleTimeString()}</b> (${fit.tMin >= 0 ? '+' : ''}${fit.tMin.toFixed(1)} min from planned LAN)</div>
+    <div style="margin-top:6px">Noon time: <b>${S.set.useUT !== false ? new Date(fit.noonMs).toISOString().slice(11,19) + ' UT' : new Date(fit.noonMs).toLocaleTimeString()}</b> (${fit.tMin >= 0 ? '+' : ''}${fit.tMin.toFixed(1)} min from planned LAN)</div>
     <div>Sun Dec at noon: ${fmt(fit.decNoon, 'lat')}</div>
     <div style="margin-top:6px">
       <b>Uncertainty</b><br>
@@ -990,7 +990,9 @@ function render(){
           badge = (badge ? badge + ' ' : '') + tag;
         }
       }
-      h+='<tr><td>'+new Date(s.t).toLocaleTimeString().slice(0,8)+'</td><td>'+s.body+'</td><td>'+fmtHs(s.hs)+'</td>'+o+
+      const isUT = S.set.useUT !== false;
+      const timeStr = isUT ? new Date(s.t).toISOString().slice(11,19) : new Date(s.t).toLocaleTimeString().slice(0,8);
+      h+='<tr><td>'+timeStr+'</td><td>'+s.body+'</td><td>'+fmtHs(s.hs)+'</td>'+o+
          `<td>
             <select data-mode="${i}" style="font-size:12px;padding:2px;width:auto;background:var(--bg);color:var(--fg);border:1px solid var(--bd);border-radius:4px">
               <option value="auto" ${mode === 'auto' ? 'selected' : ''}>Auto</option>
@@ -1019,8 +1021,8 @@ function renderSessions() {
   S.sessions.forEach(sess => {
     const n = S.sights.filter(x => x.rfSessionId === sess.id).length;
     const status = sess.frozen ? 'closed' : '<b style="color:var(--ok)">OPEN</b>';
-    const startT = sess.start ? new Date(sess.start).toLocaleTimeString().slice(0,5) : '—';
-    const endT = sess.end ? new Date(sess.end).toLocaleTimeString().slice(0,5) : '—';
+    const startT = sess.start ? (S.set.useUT !== false ? new Date(sess.start).toISOString().slice(11,16) : new Date(sess.start).toLocaleTimeString().slice(0,5)) : '—';
+    const endT = sess.end ? (S.set.useUT !== false ? new Date(sess.end).toISOString().slice(11,16) : new Date(sess.end).toLocaleTimeString().slice(0,5)) : '—';
     const span = (sess.start && sess.end) ? ((sess.end - sess.start) / 3600000).toFixed(2) + ' h' : '—';
     const total = (sess.start && sess.end) ? ((sess.end - sess.start) / 3600000 * sess.speed).toFixed(1) + ' nm' : '—';
     h += `RF-${sess.id} · ${status} · ${sess.track.toFixed(0)}° / ${sess.speed.toFixed(1)} kn · ${startT}–${endT} · ${span} · ${total} DR · ${n} sight${n!==1?'s':''}<br>`;
@@ -1075,7 +1077,7 @@ function renderNoonSights() {
     const rowStyle = isActive ? '' : 'style="opacity: 0.5"';
     const peakStyle = isPeak ? 'class="peak"' : '';
     h += `<tr ${rowStyle}><td><input type="checkbox" data-m="${s.t}" ${isActive?'checked':''} style="width:auto"></td>`+
-         `<td>${new Date(s.t).toLocaleTimeString().slice(0,5)}</td>`+
+         `<td>${S.set.useUT !== false ? new Date(s.t).toISOString().slice(11,16) : new Date(s.t).toLocaleTimeString().slice(0,5)}</td>`+
          `<td ${peakStyle}>${fmtHs(s.hs)}</td>`+
          `<td>${z2.toFixed(1)}</td>`+
          `<td class="mu" style="font-size:11px; text-align:left">${timeDir}</td></tr>`;
@@ -1214,8 +1216,9 @@ function doFix(){
 
     let h = '';
     if (session) {
+      const refTimeStr = S.set.useUT !== false ? new Date(refTime).toISOString().slice(11,19) + ' UT' : new Date(refTime).toLocaleTimeString();
       h += '<div class="mu" style="font-weight:600;color:var(--ac)">Running fix at ' +
-           new Date(refTime).toLocaleTimeString() + ' · RF' + session.id +
+           refTimeStr + ' · RF' + session.id +
            (session.frozen ? ' (closed)' : ' (open)') + '</div>';
     }
     h += '<div class="exp">' + fmt(la,'lat') + '<br>' + fmt(lo,'lon') + '</div>';

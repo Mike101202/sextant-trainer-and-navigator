@@ -1,8 +1,8 @@
-Master the art of celestial navigation with Sextant Trainer, a fully offline, privacy-first PWA designed for both beginners and experienced navigators.
+Master the art of celestial navigation with Sextant Trainer, a fully offline, privacy-first PWA designed for both beginners and experienced navigators. 
 
-Whether you are learning the intercept method for the first time, or you are a seasoned sailor keeping your paper navigation skills sharp, this app replaces the instructor sitting next to you.
+Whether you are learning the intercept method for the first time, or you are a seasoned sailor keeping your paper navigation skills sharp, this app replaces the instructor sitting next to you. 
 
-THE TWO WAYS TO NAVIGATE:
+**THE TWO WAYS TO NAVIGATE:**
 
 1. AUTO MODE (The Fast Way)
 Enter your raw sextant altitude (Hs) and let the app do the heavy lifting. It automatically computes the corrections (Ho), looks up the computed altitude (Hc) and azimuth (Zn), and plots your line of position. Perfect for quick fixes.
@@ -10,19 +10,16 @@ Enter your raw sextant altitude (Hs) and let the app do the heavy lifting. It au
 2. MANUAL MODE (The Paper Way)
 Turn off the autopilot and practice real, paper-based navigation. The app generates a step-by-step digital worksheet based on the standard Vanderbilt sight reduction form. You do the lookups in your printed Nautical Almanac and Pub. 229 tables. Enter your numbers, and the app checks your math, showing you exactly where you went wrong if you make a mistake.
 
-EVERYTHING YOU NEED OFFLINE:
+**EVERYTHING YOU NEED OFFLINE:**
+*   **Built-in Almanac:** Computes GHA and Dec for the Sun, Moon, Planets, Aries, and 37 navigational stars.
+*   **Publication Library:** Direct links to download public-domain sight reduction tables (Pub. 229) and Nautical Almanac PDFs. On supported browsers, you can link a local folder so the app can open your PDFs directly while you work.
+*   **No Internet Required:** The entire ephemeris is calculated mathematically on your device. No data connection needed at sea.
 
-- Built-in Almanac: Computes GHA and Dec for the Sun, Moon, Planets, Aries, and 37 navigational stars.
-- Publication Library: Direct links to download public-domain sight reduction tables (Pub. 229) and Nautical Almanac PDFs.
-- No Internet Required: The entire ephemeris is calculated mathematically on your device.
+**POWERFUL NAVIGATION TOOLS:**
+*   **Running Fixes:** Combine multiple Sun sights taken hours apart while moving, with automatic dead-reckoning advance.
+*   **Midday Zenith-Distance Fit:** Fits a parabola to your Sun sights to calculate exact noon latitude and longitude.
+*   **Direct Fix:** An independent two-circle intersection (Van Allen) method for cross-checking your intercepts.
 
-POWERFUL NAVIGATION TOOLS:
-
-- Running Fixes: Combine multiple Sun sights taken hours apart while moving, with automatic dead-reckoning advance.
-- Midday Zenith-Distance Fit: Fits a parabola to your Sun sights to calculate exact noon latitude and longitude.
-- Direct Fix: An independent two-circle intersection (Van Allen) method for cross-checking your intercepts.
-
-PRIVACY & ACCURACY:
-
-- No accounts, no tracking, no data collection. Everything stays on your device.
-- The app's ephemeris is coarser than the printed Nautical Almanac. When the app and the printed book disagree, trust the printed book. This is a practice tool, not a primary navigation standard.
+**PRIVACY & ACCURACY:**
+*   **No accounts, no tracking, no data collection.** Everything stays on your device.
+*   The app's ephemeris is coarser than the printed Nautical Almanac (Sun ±0.6', Stars ±0.3', Moon ±0.3'). When the app and the printed book disagree, trust the printed book. This is a practice tool, not a primary navigation standard.

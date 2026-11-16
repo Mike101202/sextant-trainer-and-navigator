@@ -1,4 +1,9 @@
+*.pdf
+*.xlsx
+.~lock.*
+*.py
 *.apk
 *.zip
-*.aab
-*.keystore
+BAC/
+man calc.js
+mancalc.js

@@ -85,6 +85,8 @@ label{display:block;font-size:13px;color:var(--mu);margin:6px 0 2px}input,select
   .mc-val input,.mc-val select,.mc-inline-d{border:none;border-bottom:1px solid #000;border-radius:0;background:transparent!important}
   .mc-bat-scroll{overflow:visible!important;scroll-snap-type:none!important}
 }
+#th,#tm,#ts{padding:9px 2px;text-align:center}
+#list{overflow-x:auto}
 </style>
 </head><body>
 <header><h1>⛵ Sextant Trainer and Navigator</h1><button id="aBtn" title="Sextant parts, tables &amp; acronyms">A</button></header>
@@ -129,7 +131,12 @@ label{display:block;font-size:13px;color:var(--mu);margin:6px 0 2px}input,select
 
   <div class="card">
     <div class="mu" id="lagNote"></div><label>Date & Time <span style="float:right;font-weight:normal"><input type="checkbox" id="ut_toggle" style="width:auto;margin-right:4px"> Use UT (GMT)</span></label>
-    <div class="row"><input id="td" type="date" style="flex:2"><input id="th" type="number" placeholder="hh" min="0" max="23"><input id="tm" type="number" placeholder="mm" min="0" max="59"><input id="ts" type="number" placeholder="ss" min="0" max="59"></div>
+    <input id="td" type="date">
+    <div class="row" style="margin-top:8px">
+      <input id="th" type="number" inputmode="numeric" placeholder="hh" min="0" max="23" style="min-width:0;text-align:center">
+      <input id="tm" type="number" inputmode="numeric" placeholder="mm" min="0" max="59" style="min-width:0;text-align:center">
+      <input id="ts" type="number" inputmode="numeric" placeholder="ss" min="0" max="59" style="min-width:0;text-align:center">
+    </div>
     <label>Sextant altitude Hs (e.g. 84° 15.5')</label>
     <div class="row"><input id="hd" type="number" placeholder="degrees"><input id="hm" type="number" step="0.1" placeholder="minutes"></div>
 
@@ -227,6 +234,21 @@ label{display:block;font-size:13px;color:var(--mu);margin:6px 0 2px}input,select
 
 <section id="fix" hidden>
   <div class="card" id="fixOut"></div>
+  <div class="card" id="visualPlotCard">
+    <b>Visual Plot</b>
+    <div style="display:flex; flex-wrap:wrap; gap:10px; justify-content:center; margin-top:10px;">
+      <div style="text-align:center;">
+        <div class="mu" style="margin-bottom:4px; font-weight:600;">Local View (Cocked Hat)</div>
+        <canvas id="lopLocal" width="300" height="300" style="background:var(--bg); border:1px solid var(--bd); border-radius:8px; max-width:100%;"></canvas>
+        <div class="mu" style="font-size:11px; margin-top:4px;">Scale: 1 px ≈ <span id="localScale">1</span> nm</div>
+      </div>
+      <div style="text-align:center;">
+        <div class="mu" style="margin-bottom:4px; font-weight:600;">Global View (Curvature)</div>
+        <canvas id="lopGlobal" width="300" height="300" style="background:var(--bg); border:1px solid var(--bd); border-radius:8px; max-width:100%;"></canvas>
+        <div class="mu" style="font-size:11px; margin-top:4px;">Orthographic projection centered on AP</div>
+      </div>
+    </div>
+  </div>
   <div class="card" id="directFixOut" hidden></div>
   <div class="card mu">The fix needs two or more ticked sights. All ticked sights must come from a single running-fix session, or all be stationary. Sessions apply dead-reckoning advance to earlier sightings; stationary sightings are not advanced. The midday fix is combined when it is valid and enabled in Setup. The direct fix (below) is an independent two-circle cross-check available when exactly two stationary sightings are ticked.</div>
 </section>
@@ -417,6 +439,16 @@ label{display:block;font-size:13px;color:var(--mu);margin:6px 0 2px}input,select
       <tr><td>Noon latitude (single sight)</td><td>±0.5–1 nm</td></tr>
     </table>
     <div class="mu" style="margin-top:8px">The built-in almanac is computed from the same ephemeris as the app (Meeus, ELP-2000, JPL elements). It is suitable for practice and cross-checking, not for primary navigation.</div>
+  </div>
+
+  <div class="card">
+    <b>External Credit — Vanderbilt AstroNavigation</b>
+    <div class="mu" style="margin-top:4px">
+      The manual sight reduction workflow in this app is inspired by the <i>AstroNavigation</i> course developed by <b>Dr. David D. Caudel</b> at Vanderbilt University, in collaboration with the U.S. Naval Observatory.
+    </div>
+    <div style="margin-top:8px">
+      <a href="https://my.vanderbilt.edu/astronav/" style="color:var(--ac);font-size:15px;font-weight:600">Access the course →</a>
+    </div>
   </div>
 
   <div class="card">
@@ -842,7 +874,7 @@ function show(p){
   $('printAlmanac').hidden = true;
   for(const x of['sights','midday','fix','setup','almanac','examples','readme','help','mancalc','library'])$(x).hidden=x!=p;
   document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.p==p));
-  if(p=='fix'){doFix();renderDirectFix();}
+  if(p=='fix'){doFix();renderDirectFix();drawFixPlot();}
   if(p=='sights'){ lagNote(); updateLevelUI(); updateRFNote(); updateSaveButtonLabel(); render(); renderSessions(); }
   if(p=='midday')populateMidday();
   if(p=='almanac')renderAlmanac();
@@ -854,23 +886,19 @@ function helpList(){
   $('helpList').innerHTML =
     '<div class="card">' +
       '<b>Sextant parts</b>' +
-      '<div class="mu" style="margin-top:4px">The diagram shows the main components of a marine sextant. Every sight reduction in this app assumes you have measured an altitude on such an instrument.</div>' +
-      '<img src="Marine_sextant.svg" alt="Marine sextant — labelled parts: horizon mirror, index mirror, telescope, shade glasses, arc, index arm, micrometer drum, clamp, frame" style="width:100%;height:auto;margin-top:8px;background:#fff;border-radius:6px;border:1px solid var(--bd)" loading="lazy">' +
+      '<div class="mu" style="margin-top:4px">The diagram shows the main components of a marine sextant.</div>' +
+      '<img src="Marine_sextant.svg" alt="Marine sextant" style="width:100%;height:auto;margin-top:8px;background:#fff;border-radius:6px;border:1px solid var(--bd)" loading="lazy">' +
       '<div class="mu" style="font-size:10px;margin-top:6px;text-align:center">Joaquim Alves Gaspar, Wikimedia Commons — <a href="https://commons.wikimedia.org/wiki/File:Marine_sextant.svg" style="color:var(--ac)">Marine_sextant.svg</a>, CC BY-SA 3.0.</div>' +
     '</div>' +
     '<div class="card">' +
       '<b>Official tables and almanac</b>' +
-      '<div class="mu" style="margin-top:4px">To practice with paper tables, you need the actual Pub. 229 (HO 229) volumes and a Nautical Almanac. Both are published by the US government and are in the public domain. A well-maintained archive of the official PDFs is at:</div>' +
+      '<div class="mu" style="margin-top:4px">To practice with paper tables, you need the actual Pub. 229 (HO 229) volumes and a Nautical Almanac.</div>' +
       '<div style="margin-top:8px"><a href="https://thenauticalalmanac.com/" style="color:var(--ac);font-size:15px;font-weight:600">thenauticalalmanac.com</a></div>' +
-      '<div class="mu" style="margin-top:6px">' +
-        'Contains:<br>' +
-        '· <b>Pub. 229</b> — all six volumes (0°–90° latitude)<br>' +
-        '· <b>Pub. 249</b> — all three volumes (air navigation)<br>' +
-        '· <b>The Nautical Almanac</b> — current and past years, full and Sun-only editions<br>' +
-        '· <b>Increments and Corrections</b> tables<br>' +
-        '· <b>Printable sight reduction forms</b><br>' +
-      '</div>' +
-      '<div class="mu" style="margin-top:8px;font-size:11px;font-style:italic">The PDFs are US Government publications (NGA / NIMA) and are freely distributable. The site itself is a privately maintained archive of those public-domain files.</div>' +
+    '</div>' +
+    '<div class="card">' +
+      '<b>External Credit — Vanderbilt AstroNavigation</b>' +
+      '<div class="mu" style="margin-top:4px">The manual sight reduction workflow in this app is inspired by the <i>AstroNavigation</i> course developed by <b>Dr. David D. Caudel</b> at Vanderbilt University, in collaboration with the U.S. Naval Observatory.</div>' +
+      '<div style="margin-top:8px"><a href="https://my.vanderbilt.edu/astronav/" style="color:var(--ac);font-weight:600">Access the course →</a></div>' +
     '</div>' +
     '<div class="card"><b>Acronyms &amp; terms</b><ul>' +
     ACR.map(a => `<li><b>${a[0]}</b> — ${a[1]}<br><span class="mu">${a[2]}</span></li>`).join('') + '</ul></div>';
@@ -1107,7 +1135,135 @@ $('m_calcLatBtn').onclick = () => {
   $('m_latDetails').textContent = `Sun Dec: ${Math.abs(sunT.dec).toFixed(1)}° ${sunT.dec < 0 ? 'S' : 'N'} | Ho: ${fmtHs(res.Ho)} | ZD: ${fmtHs(res.ZD)} | Sun bears ${res.sunBearing}`;
 };
 
+
+function drawFixPlot(fixLat = null, fixLon = null) {
+  const p = ap();
+  if (!p) return;
+  
+  const valid = [];
+  S.sights.filter(s => s.on).forEach(s => {
+    const q = reduce(s, p);
+    if (q && !isNaN(q.I) && !isNaN(q.zn)) {
+      const b = body(s.body, s.t);
+      if (b) valid.push({ q, b, s });
+    }
+  });
+
+  // --- CANVAS 1: LOCAL VIEW ---
+  const c1 = $('lopLocal');
+  if (!c1) return;
+  const ctx1 = c1.getContext('2d');
+  const W1 = c1.width, H1 = c1.height;
+  const cx1 = W1 / 2, cy1 = H1 / 2;
+  ctx1.clearRect(0, 0, W1, H1);
+
+  if (valid.length === 0) return;
+
+  let maxDist = 10;
+  valid.forEach(v => { if (Math.abs(v.q.I) > maxDist) maxDist = Math.abs(v.q.I); });
+  const scale1 = (W1 / 2 - 20) / (maxDist * 1.2);
+  const scaleEl = $('localScale');
+  if (scaleEl) scaleEl.textContent = (1 / scale1).toFixed(1);
+
+  // Draw AP
+  ctx1.strokeStyle = '#888'; ctx1.lineWidth = 1;
+  ctx1.beginPath(); ctx1.moveTo(cx1 - 5, cy1); ctx1.lineTo(cx1 + 5, cy1); ctx1.stroke();
+  ctx1.beginPath(); ctx1.moveTo(cx1, cy1 - 5); ctx1.lineTo(cx1, cy1 + 5); ctx1.stroke();
+  ctx1.fillStyle = '#888';
+  ctx1.beginPath(); ctx1.moveTo(cx1, 10); ctx1.lineTo(cx1 - 5, 25); ctx1.lineTo(cx1 + 5, 25); ctx1.fill();
+  ctx1.font = "10px sans-serif"; ctx1.fillText("N", cx1 - 5, 40);
+
+  const colors = ['#b3261e', '#12355b', '#1b7a3d', '#b45309', '#7e22ce'];
+
+  valid.forEach((v, i) => {
+    const color = colors[i % colors.length];
+    ctx1.strokeStyle = color; ctx1.fillStyle = color; ctx1.lineWidth = 2;
+    const rad = v.q.zn * Math.PI / 180;
+    
+    const ix = cx1 + (v.q.I * scale1 * Math.sin(rad));
+    const iy = cy1 - (v.q.I * scale1 * Math.cos(rad));
+    
+    ctx1.beginPath(); ctx1.setLineDash([3, 3]);
+    ctx1.moveTo(cx1, cy1); ctx1.lineTo(ix, iy); ctx1.stroke();
+    
+    const lopRad = rad + Math.PI / 2;
+    const lineLen = W1 * 1.5;
+    ctx1.beginPath(); ctx1.setLineDash([]);
+    ctx1.moveTo(ix - Math.sin(lopRad) * lineLen, iy + Math.cos(lopRad) * lineLen);
+    ctx1.lineTo(ix + Math.sin(lopRad) * lineLen, iy - Math.cos(lopRad) * lineLen);
+    ctx1.stroke();
+    
+    ctx1.font = "11px sans-serif";
+    ctx1.fillText(v.s.body.substring(0, 3), ix + 5, iy - 5);
+  });
+
+  // Draw exact fix dot if provided
+  if (fixLat !== null && fixLon !== null) {
+    const dLat = (fixLat - p.lat) * 60;
+    const dLon = (fixLon - p.lon) * 60 * Math.cos(p.lat * Math.PI / 180);
+    const px = cx1 + (dLon * scale1);
+    const py = cy1 - (dLat * scale1);
+    
+    ctx1.fillStyle = 'var(--ok)'; 
+    ctx1.beginPath(); ctx1.arc(px, py, 5, 0, 2 * Math.PI); ctx1.fill();
+    ctx1.strokeStyle = 'var(--ok)'; ctx1.lineWidth = 1;
+    ctx1.beginPath(); ctx1.arc(px, py, 8, 0, 2 * Math.PI); ctx1.stroke();
+  }
+
+  // --- CANVAS 2: GLOBAL VIEW ---
+  const c2 = $('lopGlobal');
+  if (!c2) return;
+  const ctx2 = c2.getContext('2d');
+  const W2 = c2.width, H2 = c2.height;
+  const cx2 = W2 / 2, cy2 = H2 / 2;
+  ctx2.clearRect(0, 0, W2, H2);
+
+  ctx2.strokeStyle = 'var(--bd)'; ctx2.lineWidth = 1;
+  ctx2.beginPath(); ctx2.arc(cx2, cy2, Math.min(cx2, cy2) - 5, 0, 2 * Math.PI); ctx2.stroke();
+  ctx2.fillStyle = 'var(--fg)';
+  ctx2.beginPath(); ctx2.arc(cx2, cy2, 3, 0, 2 * Math.PI); ctx2.fill();
+  ctx2.font = "10px sans-serif"; ctx2.fillText("AP", cx2 + 5, cy2 + 5);
+
+  const R = Math.PI / 180;
+  const lat0 = p.lat * R, lon0 = p.lon * R;
+  const earthRadiusPx = cx2 - 5;
+
+  function project(lat, lon) {
+    const latR = lat * R, lonR = lon * R;
+    const cosC = Math.sin(lat0) * Math.sin(latR) + Math.cos(lat0) * Math.cos(latR) * Math.cos(lonR - lon0);
+    if (cosC < 0) return null; 
+    const x = Math.cos(latR) * Math.sin(lonR - lon0);
+    const y = Math.cos(lat0) * Math.sin(latR) - Math.sin(lat0) * Math.cos(latR) * Math.cos(lonR - lon0);
+    return { x: cx2 + x * earthRadiusPx, y: cy2 - y * earthRadiusPx };
+  }
+
+  valid.forEach((v, i) => {
+    const color = colors[i % colors.length];
+    ctx2.strokeStyle = color; ctx2.lineWidth = 2;
+    
+    const gpLat = v.b.dec, gpLon = -v.b.gha;
+    const radiusDeg = 90 - v.q.ho;
+    if (radiusDeg < 0 || radiusDeg > 180) return;
+
+    ctx2.beginPath();
+    let started = false;
+    for (let angle = 0; angle <= 360; angle += 5) {
+      const a = angle * R;
+      const latRad = Math.asin(Math.sin(gpLat * R) * Math.cos(radiusDeg * R) + Math.cos(gpLat * R) * Math.sin(radiusDeg * R) * Math.cos(a));
+      const lonRad = (gpLon * R) + Math.atan2(Math.sin(a) * Math.sin(radiusDeg * R) * Math.cos(gpLat * R), Math.cos(radiusDeg * R) - Math.sin(gpLat * R) * Math.sin(latRad));
+      const pt = project(latRad / R, lonRad / R);
+      
+      if (pt) {
+        if (!started) { ctx2.moveTo(pt.x, pt.y); started = true; }
+        else { ctx2.lineTo(pt.x, pt.y); }
+      } else { started = false; }
+    }
+    ctx2.stroke();
+  });
+}
+
 function doFix(){
+  drawFixPlot();
   const p=ap(),o=$('fixOut');
   if(!o) return;
   o.innerHTML='Calculating...';
@@ -1286,7 +1442,8 @@ function doFix(){
     }
 
     o.innerHTML = h;
-  } catch (err) { o.innerHTML = '<b>Unexpected Error:</b> ' + err.message; }
+    drawFixPlot(la, lo); // Draw the visual plot with the fix coordinates
+  } catch (err) { o.innerHTML = '<b>Unexpected Error:</b> ' + err.message; drawFixPlot(); }
 }
 
 function directFix() {

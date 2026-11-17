@@ -1,6 +1,6 @@
 // Sextant Trainer — offline-first service worker
 // Bump CACHE whenever index.html / assets change so returning users get the new build.
-const CACHE = 'sextant-v1.0.6';
+const CACHE = 'sextant-v1.0.11';
 const ASSETS = [
   './',
   './index.html',

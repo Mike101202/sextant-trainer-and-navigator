@@ -563,6 +563,20 @@ try{
   if(saved.last) S.last = saved.last;
 }catch(e){}
 const save=()=>{try{localStorage.setItem('sx',JSON.stringify(S))}catch(e){}};
+function getSafeTimestamp() {
+  const dateStr = $('td').value; 
+  const h = parseInt($('th').value, 10) || 0;
+  const m = parseInt($('tm').value, 10) || 0;
+  const s = parseInt($('ts').value, 10) || 0;
+  if (!dateStr) return Date.now(); 
+  if (h < 0 || h > 23 || m < 0 || m > 59 || s < 0 || s > 59) return null;
+  const [year, month, day] = dateStr.split('-').map(Number);
+  if (S.set.useUT !== false) {
+    return Date.UTC(year, month - 1, day, h, m, s);
+  } else {
+    return new Date(year, month - 1, day, h, m, s).getTime();
+  }
+}
 const jd=ms=>ms/864e5+2440587.5,md=x=>(x%360+360)%360;
 
 function nut(T){const O=125.04452-1934.136261*T,L=280.4665+36000.7698*T,M=218.3165+481267.8813*T;return[(-17.2*Math.sin(O*R)-1.32*Math.sin(2*L*R)-.23*Math.sin(2*M*R)+.21*Math.sin(2*O*R))/3600,(9.2*Math.cos(O*R)+.57*Math.cos(2*L*R))/3600]}
@@ -619,7 +633,14 @@ function ho(s,b){
   return ha + corr / 60;
 }
 
-function num(s){const n=(String(s).match(/\d+(\.\d+)?/g)||[]).map(Number);if(!n.length)return NaN;const v=n[0]+(n[1]||0)/60+(n[2]||0)/3600;return/^\s*-|[SsWw]/.test(s)?-v:v}
+function num(s){
+  const n=(String(s).match(/\d+(\.\d+)?/g)||[]).map(Number);
+  if(!n.length) return NaN;
+  if (n[1] !== undefined && n[1] >= 60) return NaN; 
+  if (n[2] !== undefined && n[2] >= 60) return NaN;
+  const v=n[0]+(n[1]||0)/60+(n[2]||0)/3600;
+  return /^\s*-|[SsWw]/.test(s)?-v:v;
+}
 
 function fmt(v, kind){
   const isLat = kind === 'lat' || kind === true || kind === 1;
@@ -2405,9 +2426,9 @@ function install() {
     return;
   }
 
-  const LIFE_H = 15;
-  const isActive = s => !!s.on && (Date.now() - s.t) / 3600000 < LIFE_H;
-
+ // ManCalc has no age limit.
+// Sight selection is controlled exclusively by the Sights tab.
+const isActive = s => !!s.on;
   function blankSheet() {
     return { altCorr:null, addlAtm:null, addlMV:null,
              ghaTab:null, ghaInc:null, sha:null,
@@ -2584,7 +2605,7 @@ function install() {
     const active = S.sights.filter(isActive);
     if (!active.length) {
       root.append(el('div', { class: 'mc-empty',
-        text: 'No ticked sightings within the last 15 hours. Tick a sighting on the Sights tab.' }));
+       text: 'No ticked sightings. Tick a sighting on the Sights tab.' }));
       return;
     }
     const card = el('div', { class: 'card' });

@@ -42,7 +42,7 @@ jobs:
     - name: Sync web assets
       run: npx cap sync android
 
-        - name: Decode upload keystore
+    - name: Decode upload keystore
       run: |
         CLEAN=$(printf '%s' "$KEYSTORE_BASE64" | tr -d '[:space:]')
         echo "Secret length: ${#CLEAN} characters (expect roughly 3000-4500)"

@@ -1,5 +1,5 @@
 {
-  "name": "Sextant Trainer and Navigator",
+  "name": "Sextant Navigator",
   "short_name": "Sextant Nav",
   "description": "Celestial navigation trainer with Pub. 229 sight reduction and a built-in practice almanac. Fully offline.",
   "start_url": "./index.html",

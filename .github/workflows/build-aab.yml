@@ -42,8 +42,14 @@ jobs:
     - name: Sync web assets
       run: npx cap sync android
 
-    - name: Decode upload keystore
-      run: echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/upload.jks"
+        - name: Decode upload keystore
+      run: |
+        CLEAN=$(printf '%s' "$KEYSTORE_BASE64" | tr -d '[:space:]')
+        echo "Secret length: ${#CLEAN} characters (expect roughly 3000-4500)"
+        echo "Starts with: ${CLEAN:0:4} (expect MIIK, MIIJ or similar)"
+        echo "Ends with: ${CLEAN: -2}"
+        printf '%s' "$CLEAN" | base64 -d > "$RUNNER_TEMP/upload.jks"
+        ls -l "$RUNNER_TEMP/upload.jks"
 
     - name: Build release bundle
       env:

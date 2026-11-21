@@ -1,1 +1,11 @@
-{ "appId": "io.github.mike101202.sextanttrainer", "appName": "Sextant Trainer and Navigator", "webDir": "www" }
+{
+  "appId": "io.github.mike101202.sextanttrainer",
+  "appName": "Sextant Trainer and Navigator",
+  "webDir": "www",
+  "plugins": {
+    "SystemBars": {
+      "insetsHandling": "css",
+      "initialViewportFitValueHint": "cover"
+    }
+  }
+}

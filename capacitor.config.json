@@ -1,6 +1,6 @@
 {
   "appId": "io.github.mike101202.sextanttrainer",
-  "appName": "Sextant Trainer and Navigator",
+  "appName": "Sextant Navigator",
   "webDir": "www",
   "plugins": {
     "SystemBars": {
